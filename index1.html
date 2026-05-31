@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการเวลาเรียนและตรวจสอบพฤติกรรม นตท.</title>
+    <style>
+        /* --- 1. โค้ดพื้นหลังและสไตล์หลัก --- */
+        body {
+            background: linear-gradient(-45deg, #ff4d4d, #1e3c72, #00a8ff, #800000);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Sarabun', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sub-btn {
+            padding: 10px 20px;
+            margin: 6px;
+            font-size: 15px;
+            background-color: #ffffff;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .sub-btn:hover {
+            background-color: #1e3c72;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .hidden { display: none !important; }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            color: #333;
+        }
+
+        h2, h3 { 
+            text-align: center; 
+            margin-bottom: 15px; 
+            color: #1e3c72; 
+        }
+
+        .form-group { margin-bottom: 15px; }
+
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            font-size: 14px;
+        }
+
+        input[type="text"], input[type="password"], input[type="date"], select {
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-size: 15px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .submit-btn {
+            width: 100%; 
+            padding: 12px; 
+            background: #0072ff; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        .submit-btn:hover { background: #0055cc; }
+
+        .user-info {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 950px;
+            box-sizing: border-box;
+        }
+
+        .logout-btn { 
+            background: #ff4d4d; 
+            padding: 6px 12px; 
+            font-size: 12px; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        .logout-btn:hover { background: #cc0000; }
+
+        /* --- ปุ่มสลับหน้าจอ (Tabs) --- */
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 950px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.6);
+            color: #1e3c72;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .tab-btn:first-child { border-radius: 10px 0 0 10px; }
+        .tab-btn:last-child { border-radius: 0 10px 10px 0; }
+        .tab-btn.active {
+            background: #ffffff;
+            color: #800000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-bottom: 4px solid #800000;
+        }
+
+        .dashboard-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 950px;
+            box-sizing: border-box;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%; 
+            border-collapse: collapse; 
+            background: white;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            text-align: center;
+        }
+    </style>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <div id="loginSection" class="container">
+        <h2>ระบบตรวจสอบพฤติกรรม นทท.</h2>
+        <h3>ชั้นปีที่ 2 ตอน 21</h3>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">ชื่อผู้ใช้งาน / เลขประจำตัว</label>
+                <input type="text" id="username" placeholder="กรอกชื่อผู้ใช้ หรือเลขประจำตัว" required>
+            </div>
+            <div class="form-group">
+                <label for="password">รหัสผ่าน</label>
+                <input type="password" id="password" placeholder="กรอกรหัสผ่าน" required>
+            </div>
+            <button type="submit" class="submit-btn">เข้าสู่ระบบ</button>
+        </form>
+    </div>
+
+    <div id="dashboardSection" class="hidden" style="width: 100%; max-width: 1000px; display: flex; flex-direction: column; align-items: center;">
+        
+        <div class="user-info">
+            <span>ผู้ใช้งานปัจจุบัน: <strong id="displayUser">อาจารย์ผู้ควบคุม</strong></span>
+            <button class="logout-btn" onclick="handleLogout()">ออกจากระบบ</button>
+        </div>
+
+        <div style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+            <img src="IMG_0746.PNG" alt="Logo" style="width: 130px; height: auto; object-fit: contain; mix-blend-mode: screen;"> 
+        </div>
+
+        <h1 style="text-align: center; color: white; margin-bottom: 20px;">ระบบจัดการเวลาเรียนและตรวจสอบพฤติกรรมนตท.ชั้นปีที่ 2 ตอน 21</h1>
+        
+        <div class="tab-container">
+            <button id="tabDaily" class="tab-btn active" onclick="switchPage('daily')">📝 บันทึกข้อมูลรายวัน</button>
+            <button id="tabYearly" class="tab-btn" onclick="switchPage('yearly')">📊 สถิติสะสมตลอดปี</button>
+        </div>
+
+        <div id="pageDaily" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            
+            <div class="dashboard-content" style="max-width: 600px; display: flex; gap: 15px;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="academicYear">🎓 ปีการศึกษา:</label>
+                    <select id="academicYear" onchange="onYearChange()">
+                        <option value="2569">2569</option>
+                        <option value="2570">2570</option>
+                        <option value="2571">2571</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="checkDate">📅 เลือกวันที่:</label>
+                    <input type="date" id="checkDate" onchange="onDateChange()">
+                </div>
+            </div>
+
+            <div id="subjectsSection" class="dashboard-content hidden">
+                <h3 id="day-label" style="color: #1e3c72; margin-bottom: 15px;"></h3>
+                
+                <div id="monday-subjects" style="display: none;">
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 1: ฟิสิกส์')">คาบ 1: ฟิสิกส์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 2: คณิตศาสตร์เพิ่มเติม')">คาบ 2: คณิตศาสตร์เพิ่มเติม</button>
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 3-4: เคมี')">คาบ 3-4: เคมี</button>
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 5: เศรษฐศาสตร์')">คาบ 5: เศรษฐศาสตร์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 6: Lab')">คาบ 6: Lab</button>
+                    <button class="sub-btn" onclick="showAttendance('วันจันทร์ คาบ 7-8: กิจกรรมชมรม')">คาบ 7-8: กิจกรรมชมรม</button>
+                </div>
+                <div id="tuesday-subjects" style="display: none;">
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 1: คณิตพื้นฐาน')">คาบ 1: คณิตพื้นฐาน</button>
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 2: ประวัติศาสตร์')">คาบ 2: ประวัติศาสตร์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 3: คณิตเพิ่มเติม')">คาบ 3: คณิตเพิ่มเติม</button>
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 4: Upbeat')">คาบ 4: Upbeat</button>
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 5: เคมี')">คาบ 5: เคมี</button>
+                    <button class="sub-btn" onclick="showAttendance('วันอังคาร คาบ 6-7: ฟิสิกส์')">คาบ 6-7: ฟิสิกส์</button>
+                </div>
+                <div id="wednesday-subjects" style="display: none;">
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 1: การเขียน')">คาบ 1: การเขียน</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 2: ฟิสิกส์')">คาบ 2: ฟิสิกส์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 3: คณิตศาสตร์เพิ่มเติม')">คาบ 3: คณิตศาสตร์เพิ่มเติม</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 4: ภาษาไทย')">คาบ 4: ภาษาไทย</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 5: เศรษฐศาสตร์')">คาบ 5: เศรษฐศาสตร์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 6: แนะแนว/ห้องสมุด')">คาบ 6: แนะแนว/ห้องสมุด</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพุธ คาบ 7: ALC')">คาบ 7: ALC</button>
+                </div>
+                <div id="thursday-subjects" style="display: none;">
+                    <button class="sub-btn" onclick="showAttendance('วันพฤหัสบดี คาบ 1: การอบรมทางทหาร(กรม.นร.ฯ)')">คาบ 1: การอบรมทางทหาร(กรม.นร.ฯ)</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพฤหัสบดี คาบ 2: วิทยาศาสตร์การกีฬา')">คาบ 2: วิทยาศาสตร์การกีฬา</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพฤหัสบดี คาบ 3: ฟุตบอล')">คาบ 3: ฟุตบอล</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพฤหัสบดี คาบ 4: สุขศึกษา')">คาบ 4: สุขศึกษา</button>
+                    <button class="sub-btn" onclick="showAttendance('วันพฤหัสบดี คาบ 5-7: วิชาทหาร-ตำรวจ/กิจกรรมทางทหาร')">คาบ 5-7: วิชาทหาร-ตำรวจ/กิจกรรมทางทหาร</button>
+                </div>
+                <div id="friday-subjects" style="display: none;">
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 1: ภาษาจีน')">คาบ 1: ภาษาจีน</button>
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 2: ภาษาไทย')">คาบ 2: ภาษาไทย</button>
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 3: Conversation')">คาบ 3: Conversation</button>
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 4: คณิตศาสตร์พื้นฐาน')">คาบ 4: คณิตศาสตร์พื้นฐาน</button>
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 5: ทัศนศิลป์')">คาบ 5: ทัศนศิลป์</button>
+                    <button class="sub-btn" onclick="showAttendance('วันศุกร์ คาบ 6-7: คอมพิวเตอร์')">คาบ 6-7: คอมพิวเตอร์</button>
+                </div>
+                <div id="weekend-message" style="display: none; color: #ff4d4d; font-weight: bold; padding: 15px;">
+                    ⚠️ วันที่เลือกเป็นวันหยุดเสาร์-อาทิตย์ ไม่มีตารางเรียนในระบบ
+                </div>
+            </div>
+
+            <div id="attendance-box" class="dashboard-content" style="display: none;">
+                <h2 id="current-subject" style="color: #2c3e50; margin-top: 0;"></h2>
+                <p id="current-date-display" style="color: #0044cc; font-weight: bold; font-size: 16px;"></p>
+                
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="IMG_1181.jpg.JPG" alt="ตารางเรียนประจำตอน" width="380" style="border-radius: 8px;">
+                </div>
+
+                <table id="attendance-table">
+                    <thead>
+                        <tr style="background-color: #1e3c72; color: white;">
+                            <th>ลำดับ</th>
+                            <th style="text-align: left;">ชื่อ-นามสกุล</th>
+                            <th>มาเรียน</th>
+                            <th>ลา</th>
+                            <th>ขาดเรียน</th>
+                            <th style="color: #ff9900;">หลับ</th>
+                            <th style="color: #ff3333;">โนหนังสือ</th>
+                            <th style="color: #00cc66;">ขาดความรุกรบ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendance-tbody">
+                        </tbody>
+                </table>
+                <button class="submit-btn" style="margin-top: 25px; background-color: #22c55e;" onclick="saveToDatabase()">💾 บันทึกข้อมูลรายวันเข้าคลาวด์</button>
+            </div>
+        </div>
+
+        <div id="pageYearly" class="hidden" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <div class="dashboard-content">
+                <h2 style="color: #800000; margin-top: 0;">📊 สรุปรายงานพฤติกรรมสะสมตลอดปีการศึกษา</h2>
+                
+                <div style="max-width: 300px; margin: 0 auto 20px auto;">
+                    <label for="viewYearSelect" style="font-size: 14px; margin-bottom: 5px;">เลือกปีการศึกษาที่ต้องการเรียกดูคลังข้อมูล:</label>
+                    <select id="viewYearSelect" onchange="loadYearlySummary()">
+                        <option value="2569">2569</option>
+                        <option value="2570">2570</option>
+                        <option value="2571">2571</option>
+                    </select>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr style="background-color: #333; color: white;">
+                            <th>ลำดับ</th>
+                            <th style="text-align: left;">ชื่อ-นามสกุล</th>
+                            <th>มาเรียนรวม</th>
+                            <th>ลารวม</th>
+                            <th style="background-color: #ffe6e6; color: red;">ขาดเรียนรวม</th>
+                            <th style="background-color: #fff2cc; color: #b78103;">หลับรวม</th>
+                            <th style="background-color: #fce4d6; color: #c65911;">โนหนังสือรวม</th>
+                            <th style="background-color: #e2efda; color: #375623;">ขาดความรุกรบรวม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yearly-summary-tbody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ข้อมูล นตท. ต้นแบบ (หากมีรายชื่อเพิ่มสามารถนำมาใส่ในอาร์เรย์นี้ได้เลยครับ)
+        const studentsList = [
+            { id: 1, name: "นตท.ปรเมศวร์ จงชมผา" },
+            { id: 2, name: "นตท. ภานุพงศ์ พุทสุข" },
+            { id: 3, name: "นตท.ภูพริษฐ์ แสงมรกต" }
+        ];
+
+        // ⚠️ บล็อกสำคัญ: นำรหัสที่ได้จากเว็บแอป Firebase Console ของคุณมาวางทับบล็อกนี้
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        var database = null;
+        if(firebaseConfig.apiKey !== "YOUR_API_KEY") {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+        }
+
+        // จัดการโหลดรายชื่อลงตารางเช็กชื่อแบบไดนามิก
+        const tbody = document.getElementById('attendance-tbody');
+        studentsList.forEach(std => {
+            tbody.innerHTML += `
+                <tr data-id="${std.id}">
+                    <td>${std.id}</td>
+                    <td style="text-align: left; font-weight: bold;">${std.name}</td>
+                    <td><input type="checkbox" class="chk-come" checked></td>
+                    <td><input type="checkbox" class="chk-leave"></td>
+                    <td><input type="checkbox" class="chk-absent"></td>
+                    <td><input type="checkbox" class="chk-sleep"></td>
+                    <td><input type="checkbox" class="chk-nobook"></td>
+                    <td><input type="checkbox" class="chk-noactive"></td>
+                </tr>
+            `;
+        });
+
+        // ฟังก์ชันระบบจัดการสลับหน้าจอระหว่าง รายวัน กับ ตลอดปี
+        function switchPage(page) {
+            document.getElementById('tabDaily').classList.remove('active');
+            document.getElementById('tabYearly').classList.remove('active');
+            document.getElementById('pageDaily').classList.add('hidden');
+            document.getElementById('pageYearly').classList.add('hidden');
+
+            if(page === 'daily') {
+                document.getElementById('tabDaily').classList.add('active');
+                document.getElementById('pageDaily').classList.remove('hidden');
+            } else if(page === 'yearly') {
+                document.getElementById('tabYearly').classList.add('active');
+                document.getElementById('pageYearly').classList.remove('hidden');
+                loadYearlySummary(); // เรียกดึงข้อมูลสะสมทั้งหมดจาก Firebase ขึ้นมาคำนวณทันที
+            }
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('displayUser').innerText = document.getElementById('username').value;
+            document.getElementById('checkDate').value = new Date().toISOString().split('T')[0];
+            onDateChange();
+            renderOfflineYearlySummary();
+        }
+
+        function handleLogout() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+        // ประมวลผลหาวันเพื่อเจาะจงรายวิชาเมื่อปฏิทินเปลี่ยน
+        function onDateChange() {
+            const selectedDate = document.getElementById('checkDate').value;
+            if(!selectedDate) return;
+            document.getElementById('attendance-box').style.display = 'none';
+            
+            const dayOfWeek = new Date(selectedDate).getDay();
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date-display').innerText = "ประจำวันที่: " + new Date(selectedDate).toLocaleDateString('th-TH', dateOptions);
+            document.getElementById('subjectsSection').classList.remove('hidden');
+
+            // รีเซ็ตการแสดงผลปุ่มรายวิชา
+            document.getElementById('monday-subjects').style.display = 'none';
+            document.getElementById('tuesday-subjects').style.display = 'none';
+            document.getElementById('wednesday-subjects').style.display = 'none';
+            document.getElementById('thursday-subjects').style.display = 'none';
+            document.getElementById('friday-subjects').style.display = 'none';
+            document.getElementById('weekend-message').style.display = 'none';
+
+            if (dayOfWeek === 1) {
+                document.getElementById('day-label').innerText = "📚 รายวิชาเรียนประจำวันจันทร์";
+                document.getElementById('monday-subjects').style.display = 'block';
+            } else if (dayOfWeek === 2) {
+                document.getElementById('day-label').innerText = "📚 รายวิชาเรียนประจำวันอังคาร";
+                document.getElementById('tuesday-subjects').style.display = 'block';
+            } else if (dayOfWeek === 3) {
+                document.getElementById('day-label').innerText = "📚 รายวิชาเรียนประจำวันพุธ";
+                document.getElementById('wednesday-subjects').style.display = 'block';
+            } else if (dayOfWeek === 4) {
+                document.getElementById('day-label').innerText = "📚 รายวิชาเรียนประจำวันพฤหัสบดี";
+                document.getElementById('thursday-subjects').style.display = 'block';
+            } else if (dayOfWeek === 5) {
+                document.getElementById('day-label').innerText = "📚 รายวิชาเรียนประจำวันศุกร์";
+                document.getElementById('friday-subjects').style.display = 'block';
+            } else {
+                document.getElementById('day-label').innerText = "📅 ตารางกิจกรรม";
+                document.getElementById('weekend-message').style.display = 'block';
+            }
+        }
+
+        let currentActiveSubject = "";
+        function showAttendance(subjectDetails) {
+            currentActiveSubject = subjectDetails;
+            document.getElementById('attendance-box').style.display = 'block';
+            document.getElementById('current-subject').innerText = 'กำลังตรวจสอบพฤติกรรม: ' + subjectDetails;
+        }
+
+        function onYearChange() {
+            document.getElementById('viewYearSelect').value = document.getElementById('academicYear').value;
+            document.getElementById('attendance-box').style.display = 'none';
+        }
+
+        // 💾 ฟังก์ชันบันทึกพฤติกรรมรายวัน ส่งขึ้นสะสมใน Cloud Firebase แยกตามโฟลเดอร์ปีการศึกษา
+        function saveToDatabase() {
+            const selectedDate = document.getElementById('checkDate').value;
+            const selectedYear = document.getElementById('academicYear').value;
+
+            if(!database) {
+                alert("บันทึกข้อมูลจำลองสำเร็จ! (กรุณาต่อ Firebase Config เพื่อส่งข้อมูลไปสะสมในคลังตลอดปีการศึกษาออนไลน์)");
+                return;
+            }
+
+            const saveData = {};
+            studentsList.forEach(std => {
+                const row = document.querySelector(`tr[data-id="${std.id}"]`);
+                saveData[std.id] = {
+                    name: std.name,
+                    come: row.querySelector('.chk-come').checked ? 1 : 0,
+                    leave: row.querySelector('.chk-leave').checked ? 1 : 0,
+                    absent: row.querySelector('.chk-absent').checked ? 1 : 0,
+                    sleep: row.querySelector('.chk-sleep').checked ? 1 : 0,
+                    nobook: row.querySelector('.chk-nobook').checked ? 1 : 0,
+                    noactive: row.querySelector('.chk-noactive').checked ? 1 : 0
+                };
+            });
+
+            // จัดเก็บข้อมูลลงฐานข้อมูลออนไลน์: years -> [ปีการศึกษา] -> attendance -> [วันที่] -> [วิชา/คาบเรียน]
+            database.ref('years/' + selectedYear + '/attendance/' + selectedDate + '/' + currentActiveSubject).set(saveData, (error) => {
+                if (error) {
+                    alert("เกิดปัญหาข้อผิดพลาด: " + error.message);
+                } else {
+                    alert("บันทึกพฤติกรรม นตท. รายวิชานี้และจัดส่งไปรวบรวมสะสมในคลังปีการศึกษา " + selectedYear + " เรียบร้อย!");
+                }
+            });
+        }
+
+        // 📊 ฟังก์ชันคำนวณสะสมสถิติ Realtime ดึงข้อมูลมา Sum ยอดรวมทั้งหมดของปีการศึกษานั้นๆ
+        function loadYearlySummary() {
+            if(!database) return;
+            const viewYear = document.getElementById('viewYearSelect').value;
+
+            database.ref('years/' + viewYear + '/attendance').on('value', (snapshot) => {
+                const allData = snapshot.val();
+                const summary = {};
+
+                // เซ็ตค่าสถิติเริ่มต้นให้ทุกคน
+                studentsList.forEach(std => {
+                    summary[std.id] = { name: std.name, come: 0, leave: 0, absent: 0, sleep: 0, nobook: 0, noactive: 0 };
+                });
+
+                // วนลูปสแกนดึงข้อมูลทุกคาบ ทุกวัน ของปีการศึกษานั้นมารวมผลลัพธ์
+                if(allData) {
+                    for(let date in allData) {
+                        for(let subject in allData[date]) {
+                            for(let stdId in allData[date][subject]) {
+                                if(summary[stdId]) {
+                                    const record = allData[date][subject][stdId];
+                                    summary[stdId].come += record.come || 0;
+                                    summary[stdId].leave += record.leave || 0;
+                                    summary[stdId].absent += record.absent || 0;
+                                    summary[stdId].sleep += record.sleep || 0;
+                                    summary[stdId].nobook += record.nobook || 0;
+                                    summary[stdId].noactive += record.noactive || 0;
+                                }
+                            }
+                        }
+                    }
+                }
+                renderSummaryTable(summary);
+            });
+        }
+
+        // จัดพิมพ์โครงสร้างข้อมูลสถิติตลอดปีแสดงลงตารางหน้าจอ
+        function renderSummaryTable(summaryData) {
+            const summaryTbody = document.getElementById('yearly-summary-tbody');
+            summaryTbody.innerHTML = "";
+            for(let id in summaryData) {
+                const std = summaryData[id];
+                summaryTbody.innerHTML += `
+                    <tr>
+                        <td>${id}</td>
+                        <td style="text-align: left; font-weight: bold;">${std.name}</td>
+                        <td>${std.come} คาบ</td>
+                        <td>${std.leave} ครั้ง</td>
+                        <td style="color: red; font-weight: bold;">${std.absent} ครั้ง</td>
+                        <td style="color: #b78103;">${std.sleep} ครั้ง</td>
+                        <td style="color: #c65911;">${std.nobook} ครั้ง</td>
+                        <td style="color: #375623;">${std.noactive} ครั้ง</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderOfflineYearlySummary() {
+            const mockSummary = {};
+            studentsList.forEach(std => {
+                mockSummary[std.id] = { name: std.name, come: 0, leave: 0, absent: 0, sleep: 0, nobook: 0, noactive: 0 };
+            });
+            renderSummaryTable(mockSummary);
+        }
+    </script>
+</body>
+</html>

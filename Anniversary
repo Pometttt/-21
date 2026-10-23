@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Anniversary ❤</title>
+    <!-- นำเข้าฟอนต์ Google Fonts เพื่อความสวยงาม -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Dancing+Script:wght@700&family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: linear-gradient(135deg, #ffe5ec 0%, #ffc2d1 50%, #ffb3c6 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* กล่องข้อความหลัก */
+        .container {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 75, 110, 0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        /* หัวข้อภาษาอังกฤษสไตล์เขียนมือ */
+        .main-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            color: #ff477e;
+            margin-bottom: 0.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #6c757d;
+            font-weight: 400;
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+
+        /* ส่วนแสดงรูปภาพทรงกลม/หัวใจ */
+        .couple-img-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 2rem;
+        }
+
+        .couple-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 5px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .heart-icon {
+            position: absolute;
+            bottom: 0;
+            right: 10px;
+            background: #ff477e;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* ส่วนคำนวณเวลาที่คบกัน */
+        .timer-title {
+            font-size: 1.1rem;
+            color: #ff5c8a;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .time-box {
+            background: #fff0f3;
+            padding: 10px 5px;
+            border-radius: 12px;
+            border: 1px solid #ffccd5;
+        }
+
+        .time-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ff477e;
+            display: block;
+        }
+
+        .time-label {
+            font-size: 0.8rem;
+            color: #a3a3a3;
+        }
+
+        /* ข้อความซึ้งๆ */
+        .love-letter {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #495057;
+            font-style: italic;
+            border-top: 1fr solid #eee;
+            padding-top: 1.5rem;
+        }
+
+        /* ปุ่มกดเล่นเพลงหรือส่งความรัก */
+        .btn-love {
+            margin-top: 1.5 rem;
+            background: linear-gradient(45deg, #ff477e, #ff7096);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 71, 126, 0.4);
+        }
+
+        .btn-love:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 71, 126, 0.6);
+        }
+
+        /* เอฟเฟกต์หัวใจโปรยปราย */
+        .falling-heart {
+            position: absolute;
+            color: #ff7096;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 1;
+            animation: fall linear forwards;
+        }
+
+        /* Keyframes แอนิเมชัน */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(105vh) translateX(100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- หัวข้อ -->
+        <h1 class="main-title">Happy Anniversary</h1>
+        <p class="subtitle">สุขสันต์วันครบรอบมุ้ตอลกับเค้าาาา ❤</p>
+
+        <!-- รูปภาพคู่ (เปลี่ยน URL รูปใน src ได้เลย) -->
+        <div class="couple-img-container">
+            <img class="couple-img" src="IMG_2114.JPG" alt="Couple">
+            <div class="heart-icon">❤</div>
+        </div>
+
+        <!-- ตัวนับเวลา -->
+        <div class="timer-section">
+            <p class="timer-title">เค้าเลี้ยงมุ้ตอลมาแล้ว...</p>
+            <div class="timer-grid">
+                <div class="time-box">
+                    <span class="time-number" id="days">00</span>
+                    <span class="time-label">วัน</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-number" id="hours">00</span>
+                    <span class="time-label">ชม.</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-number" id="minutes">00</span>
+                    <span class="time-label">นาที</span>
+                </div>
+                <div class="time-box">
+                    <span class="time-number" id="seconds">00</span>
+                    <span class="time-label">วิ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- กล่องจดหมายรัก -->
+        <p class="love-letter">
+            "เค้าขอบคุณตอลมากๆนะที่ยุกับเค้าจนเกือบ2ปีตลอดเวลาที่ผ่านมาเกิดเรื่องเย้อมากกกกก <br>
+            แต่ตอลก้ยางยุกับเค้าตอลม่ายหนีเค้าเค้าดีใจมั่กๆๆๆๆๆที่ตอลรักเค้าขนาดนี้ <br>
+            ยุกับเค้าปายนานๆเลยน้าาาาาาเค้ารักตอลน้าาาาาารักทิสุดดดดดด"
+        </p>
+
+        <!-- ปุ่มกดเล่นๆ เพิ่มลูกเล่น -->
+        <button class="btn-love" onclick="createHeartShower()">กดรับความรัก ❤</button>
+    </div>
+
+    <script>
+        // 1. ตั้งค่าวันที่เริ่มต้นคบกัน (ปี ค.ศ., เดือน-1 (ม.ค.=0, ก.พ.=1), วัน, ชม, นาที)
+        // เช่น คบกันวันที่ 14 กุมภาพันธ์ 2024 เวลา 00:00 น. ให้แก้เป็น new Date(2024, 1, 14, 0, 0, 0)
+        const startDate = new Date(2024, 10, 21, 18, 4, 2); 
+
+        function updateTimer() {
+            const now = new Date();
+            const difference = now - startDate;
+
+            // คำนวณ เวลา
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+            // อัปเดตลงหน้าเว็บ
+            document.getElementById("days").innerText = days.toString().padStart(2, '0');
+            document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
+            document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
+            document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+        }
+
+        // ให้ฟังก์ชันทำงานทุกๆ 1 วินาที
+        setInterval(updateTimer, 1000);
+        updateTimer(); // รันทันทีเมื่อโหลดหน้าเว็บ
+
+        // 2. ฟังก์ชันทำหัวใจโปรยปรายอัตโนมัติ
+        function createHeart() {
+            const heart = document.createElement("div");
+            heart.classList.add("falling-heart");
+            heart.innerText = "❤";
+            
+            // สุ่มตำแหน่งและความเร็ว
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.animationDuration = Math.random() * 3 + 3 + "s"; // ระหว่าง 3-6 วินาที
+            heart.style.fontSize = Math.random() * 15 + 15 + "px"; // ขนาด 15-30px
+            
+            document.body.appendChild(heart);
+            
+            // ลบเมื่อหลุดหน้าจอไปแล้ว
+            setTimeout(() => {
+                heart.remove();
+            }, 6000);
+        }
+
+        // ปล่อยหัวใจตกเรื่อยๆ ทุก 500 มิลลิวินาที
+        setInterval(createHeart, 500);
+
+        // 3. ฟังก์ชันปุ่มกดแล้วหัวใจพุ่งกระจาย
+        function createHeartShower() {
+            for(let i=0; i<20; i++) {
+                setTimeout(createHeart, i * 50);
+            }
+        }
+    </script>
+</body>
+</html>
